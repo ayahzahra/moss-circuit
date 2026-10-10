@@ -28,9 +28,3 @@ tersimpan di `%APPDATA%\MossCircuit`.
 Perintah tersebut membuat `MossCircuit.exe`. Source tersedia di
 [`MossCircuit.pas`](MossCircuit.pas). Game Windows menggunakan WinAPI bawaan
 dan tidak memerlukan library eksternal.
-
-## Versi browser
-
-Buka [`index.html`](index.html) langsung di browser—tanpa server atau dependensi.
-Untuk menerbitkan versi ini dengan GitHub Pages, buka **Settings → Pages**,
-pilih **Deploy from a branch**, lalu pilih branch `main` dan folder `/ (root)`.
