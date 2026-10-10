@@ -33,3 +33,13 @@ tersimpan di `%APPDATA%\MossCircuit`.
 Perintah tersebut membuat `MossCircuit.exe`. Source tersedia di
 [`MossCircuit.pas`](MossCircuit.pas). Game Windows menggunakan WinAPI bawaan
 dan tidak memerlukan library eksternal.
+
+## Blog & review
+
+Ada review teknis lengkap yang membaca kode ini baris demi baris —
+tentang struktur kode, penanganan I/O, guard condition, dan mengapa batas
+kecepatan minimum itu penting.
+
+**Baca di sini:** [Moss Circuit: Mini Game Ular Buatan Sendiri dalam 839 Baris Pascal](https://brandmu.my.id/posts/moss-circuit-mini-game-pascal/)
+
+Penulis: [Nuril Ayahzahra](https://brandmu.my.id/)
