@@ -1,31 +1,36 @@
-# Moss Circuit
+# Moss Circuit — kebun mini
 
-A tiny garden arcade about guiding a growing little snake through a moonlit
-garden. Collect the glowing seeds, keep to the winding path, and see how long
-you can grow.
+Game snake bertema kebun malam. Kumpulkan biji bercahaya, hindari tepi dan
+tubuh ular, lalu coba capai rekor terbaikmu.
 
-## Play
+## Mainkan versi Windows
 
-Open [`index.html`](index.html) in a modern browser. No server, package install,
-or external dependencies are required.
+Unduh atau buka [`MossCircuit.exe`](MossCircuit.exe) di Windows 32-bit atau
+64-bit. Tidak perlu menginstal runtime atau dependensi tambahan.
 
-## Controls
+## Kontrol
 
-- **Arrow keys** or **WASD** to steer
-- **Space** to pause or resume
-- **Touch controls** on smaller screens
-- Use the button in the top-right corner to switch between dark and light themes
+- **Panah** atau **WASD** untuk mengarahkan ular
+- **Space** untuk mulai, jeda, atau lanjutkan permainan
+- **T** untuk mengganti tema gelap/terang
+- **R** untuk memulai ulang
+- Tombol di layar juga bisa diklik
 
-The snake gets faster as it gathers seeds. Your best score and theme choice are
-saved in this browser.
+Kecepatan bertambah saat ular mengumpulkan biji. Rekor dan pilihan tema
+tersimpan di `%APPDATA%\MossCircuit`.
 
-## GitHub Pages
+## Kompilasi dari source Pascal
 
-To publish the game as a website, open the repository's **Settings → Pages**,
-choose **Deploy from a branch**, then select the `main` branch and `/ (root)`.
-After GitHub Pages finishes deploying, it will show the game's public URL in
-that settings page.
+1. Instal [Free Pascal Compiler](https://www.freepascal.org/download.html).
+2. Buka Command Prompt di folder proyek.
+3. Jalankan `fpc -WG -O2 -Xs MossCircuit.pas`.
 
-## Built with
+Perintah tersebut membuat `MossCircuit.exe`. Source tersedia di
+[`MossCircuit.pas`](MossCircuit.pas). Game Windows menggunakan WinAPI bawaan
+dan tidak memerlukan library eksternal.
 
-HTML, CSS, and the Canvas 2D API—everything is contained in a single page.
+## Versi browser
+
+Buka [`index.html`](index.html) langsung di browser—tanpa server atau dependensi.
+Untuk menerbitkan versi ini dengan GitHub Pages, buka **Settings → Pages**,
+pilih **Deploy from a branch**, lalu pilih branch `main` dan folder `/ (root)`.
