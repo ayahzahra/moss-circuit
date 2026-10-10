@@ -3,10 +3,15 @@
 Game snake bertema kebun malam. Kumpulkan biji bercahaya, hindari tepi dan
 tubuh ular, lalu coba capai rekor terbaikmu.
 
+## Screenshot
+
+![Tampilan game Moss Circuit di Windows](Screenshot.png)
+
 ## Mainkan versi Windows
 
-Unduh atau buka [`MossCircuit.exe`](MossCircuit.exe) di Windows 32-bit atau
-64-bit. Tidak perlu menginstal runtime atau dependensi tambahan.
+Unduh **[MossCircuit.exe dari GitHub Releases](https://github.com/ayahzahra/moss-circuit/releases/latest/download/MossCircuit.exe)**
+untuk Windows 32-bit atau 64-bit. Tidak perlu menginstal runtime atau
+dependensi tambahan.
 
 ## Kontrol
 
