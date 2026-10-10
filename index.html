@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#111711">
+  <title>Moss Circuit — a tiny garden arcade</title>
+  <script>
+    try {
+      const savedTheme = localStorage.getItem("moss-circuit-theme");
+      document.documentElement.dataset.theme = savedTheme ||
+        (matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark");
+      document.querySelector('meta[name="theme-color"]').content =
+        document.documentElement.dataset.theme === "dark" ? "#111711" : "#f1efe5";
+    } catch {
+      document.documentElement.dataset.theme =
+        matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+    }
+  </script>
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 15px;
+      font-synthesis: none;
+      text-rendering: optimizeLegibility;
+      -webkit-font-smoothing: antialiased;
+      --page: #111711;
+      --panel: #1b241a;
+      --panel-border: #354231;
+      --muted: #a2ad98;
+      --text: #f0f1db;
+      --secondary-text: #cad1b8;
+      --green: #d5f27a;
+      --green-soft: #e4ff9a;
+      --pink: #ff8876;
+      --tag-bg: rgba(27, 36, 26, .8);
+      --stat-bg: linear-gradient(135deg, #202b1e, #192119);
+      --frame-border: #3b4a36;
+      --frame-bg: #192119;
+      --canvas-fill: #111a15;
+      --grid-line: rgba(193, 219, 166, .09);
+      --overlay-bg: rgba(13, 20, 15, .82);
+      --key-bg: #202b1e;
+      --key-border: #3d4b38;
+      --key-text: #d1d7c2;
+      --control-bg: #202b1e;
+      --control-text: #edf1da;
+      --snake-head: #e6ff9a;
+      --snake-body: 135, 199, 111;
+      --snake-eye: #23301c;
+      --leaf-color: #a8ca80;
+      --food: #ff8876;
+      --food-highlight: #fff0bd;
+    }
+
+    :root[data-theme="light"] {
+      color-scheme: light;
+      --page: #f1efe5;
+      --panel: #fbfaf4;
+      --panel-border: #e1dfcf;
+      --muted: #737766;
+      --text: #262d20;
+      --secondary-text: #5e654f;
+      --green: #547a38;
+      --green-soft: #3c6227;
+      --pink: #cf5948;
+      --tag-bg: rgba(251, 250, 244, .85);
+      --stat-bg: linear-gradient(135deg, #fffef8, #f7f5eb);
+      --frame-border: #d7d5c4;
+      --frame-bg: #e6e4d7;
+      --canvas-fill: #f3f3e8;
+      --grid-line: rgba(63, 88, 53, .12);
+      --overlay-bg: rgba(246, 246, 235, .9);
+      --key-bg: #f8f7ef;
+      --key-border: #dedcca;
+      --key-text: #555b48;
+      --control-bg: #fbfaf4;
+      --control-text: #414a36;
+      --snake-head: #668c46;
+      --snake-body: 102, 151, 72;
+      --snake-eye: #f4f4e7;
+      --leaf-color: #668c46;
+      --food: #cf5948;
+      --food-highlight: #fff3c9;
+    }
+
+    :root[data-theme="light"] body {
+      background:
+        radial-gradient(ellipse at 50% 4%, rgba(182, 188, 112, .17), transparent 43%),
+        var(--page);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      min-width: 320px;
+      min-height: 100vh;
+      margin: 0;
+      display: grid;
+      place-items: center;
+      padding: 36px 20px;
+      color: var(--text);
+      background:
+        radial-gradient(ellipse at 50% 4%, rgba(119, 146, 78, .13), transparent 43%),
+        var(--page);
+    }
+
+    button { font: inherit; }
+
+    .game-shell {
+      width: min(100%, 650px);
+    }
+
+    .topline {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin: 0 2px 18px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-mark {
+      width: 44px;
+      height: 44px;
+      display: grid;
+      place-items: center;
+      border: 1px solid color-mix(in srgb, var(--green) 42%, transparent);
+      border-radius: 15px 15px 15px 5px;
+      color: var(--green);
+      background: color-mix(in srgb, var(--green) 10%, transparent);
+      box-shadow: 0 7px 24px color-mix(in srgb, var(--green) 12%, transparent);
+    }
+
+    .brand-mark svg { width: 27px; height: 27px; }
+    h1 { margin: 0; font-family: Georgia, "Times New Roman", serif; font-size: 22px; font-weight: 600; letter-spacing: -.04em; }
+    .eyebrow { margin: 3px 0 0; color: var(--muted); font-size: 11px; letter-spacing: .015em; }
+
+    .live-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 7px 10px;
+      border: 1px solid var(--panel-border);
+      border-radius: 999px;
+      color: var(--secondary-text);
+      background: var(--tag-bg);
+      font-size: 11px;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+    }
+
+    .live-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 10px color-mix(in srgb, var(--green) 70%, transparent);
+    }
+
+    .scoreboard {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .stat {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 68px;
+      padding: 12px 18px;
+      border: 1px solid var(--panel-border);
+      border-radius: 13px;
+      background: var(--stat-bg);
+    }
+
+    .stat-label {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .stat-value {
+      color: var(--text);
+      font-size: 21px;
+      font-variant-numeric: tabular-nums;
+      font-weight: 650;
+      letter-spacing: -.04em;
+    }
+
+    .stat:first-child .stat-value { color: var(--green); }
+
+    .board-frame {
+      position: relative;
+      overflow: hidden;
+      padding: 9px;
+      border: 1px solid var(--frame-border);
+      border-radius: 22px;
+      background: var(--frame-bg);
+      box-shadow: 0 22px 70px rgba(0, 0, 0, .24), 0 0 42px color-mix(in srgb, var(--green) 6%, transparent);
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      aspect-ratio: 1;
+      border-radius: 14px;
+      background: var(--canvas-fill);
+      touch-action: none;
+    }
+
+    .overlay {
+      position: absolute;
+      inset: 9px;
+      display: grid;
+      place-items: center;
+      padding: 22px;
+      border-radius: 10px;
+      background: var(--overlay-bg);
+      -webkit-backdrop-filter: blur(5px);
+      backdrop-filter: blur(5px);
+      text-align: center;
+      transition: opacity .18s ease, visibility .18s ease;
+    }
+
+    .overlay[hidden] { display: none; }
+    .overlay-content { max-width: 290px; }
+
+    .overlay-icon {
+      width: 54px;
+      height: 54px;
+      display: grid;
+      place-items: center;
+      margin: 0 auto 17px;
+      border: 1px solid color-mix(in srgb, var(--green) 35%, transparent);
+      border-radius: 19px 19px 19px 7px;
+      color: var(--green);
+      background: color-mix(in srgb, var(--green) 11%, transparent);
+      box-shadow: 0 0 30px color-mix(in srgb, var(--green) 12%, transparent);
+    }
+
+    .overlay-icon svg { width: 26px; height: 26px; }
+    .overlay h2 { margin: 0; font-size: clamp(24px, 6vw, 31px); letter-spacing: -.055em; }
+    .overlay p { margin: 9px 0 20px;     color: var(--muted); font-size: 14px; line-height: 1.55; }
+
+    .primary-button {
+      min-height: 43px;
+      padding: 0 19px;
+      border: 0;
+      border-radius: 10px;
+      color: #17200f;
+      background: var(--green);
+      box-shadow: 0 7px 22px color-mix(in srgb, var(--green) 22%, transparent);
+      cursor: pointer;
+      font-weight: 700;
+      transition: transform .15s ease, background .15s ease, box-shadow .15s ease;
+    }
+
+    .primary-button:hover {
+      transform: translateY(-1px);
+      background: var(--green-soft);
+      box-shadow: 0 9px 28px color-mix(in srgb, var(--green) 30%, transparent);
+    }
+
+    .primary-button:focus-visible, .mobile-controls button:focus-visible {
+      outline: 2px solid var(--green);
+      outline-offset: 3px;
+    }
+
+    .footline {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin: 14px 3px 0;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .key-hint { display: flex; align-items: center; gap: 7px; }
+
+    kbd {
+      min-width: 23px;
+      padding: 3px 6px;
+      border: 1px solid var(--key-border);
+      border-radius: 5px;
+      color: var(--key-text);
+      background: var(--key-bg);
+      font-family: inherit;
+      font-size: 10px;
+      text-align: center;
+    }
+
+    .mobile-controls {
+      display: none;
+      grid-template-columns: repeat(3, 48px);
+      grid-template-rows: repeat(2, 42px);
+      justify-content: center;
+      gap: 5px;
+      margin-top: 18px;
+    }
+
+    .mobile-controls button {
+      border: 1px solid var(--panel-border);
+      border-radius: 10px;
+      color: var(--control-text);
+      background: var(--control-bg);
+      cursor: pointer;
+      font-size: 16px;
+      touch-action: manipulation;
+    }
+
+    .mobile-controls button:active { color: var(--green); background: var(--panel); }
+
+    .theme-toggle {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      min-height: 34px;
+      padding: 0 10px;
+      border: 1px solid var(--panel-border);
+      border-radius: 9px;
+      color: var(--secondary-text);
+      background: var(--tag-bg);
+      cursor: pointer;
+      font-size: 12px;
+      transition: color .15s ease, border-color .15s ease, background .15s ease;
+    }
+
+    .theme-toggle:hover { color: var(--text); border-color: var(--muted); }
+    .theme-toggle svg { width: 15px; height: 15px; }
+    :root[data-theme="light"] .theme-toggle .sun-icon,
+    :root:not([data-theme="light"]) .theme-toggle .moon-icon { display: none; }
+    .top-actions { display: flex; align-items: center; gap: 9px; }
+    .mobile-controls button[data-dir="up"] { grid-column: 2; grid-row: 1; }
+    .mobile-controls button[data-dir="left"] { grid-column: 1; grid-row: 2; }
+    .mobile-controls button[data-dir="down"] { grid-column: 2; grid-row: 2; }
+    .mobile-controls button[data-dir="right"] { grid-column: 3; grid-row: 2; }
+
+    @media (max-width: 560px) {
+      body { padding: 24px 15px; }
+      .topline { margin-bottom: 15px; }
+      .top-actions { gap: 6px; }
+      .live-tag { padding: 7px 8px; font-size: 10px; }
+      .theme-toggle { gap: 0; width: 34px; padding: 0; }
+      .theme-toggle span { display: none; }
+      .board-frame { padding: 6px; }
+      .overlay { inset: 6px; }
+      .mobile-controls { display: grid; }
+      .footline { font-size: 11px; }
+    }
+
+    @media (max-width: 390px) {
+      .topline { flex-wrap: wrap; }
+      .top-actions { margin-left: auto; }
+      .live-tag { font-size: 9px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <main class="game-shell">
+    <header class="topline">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none">
+            <path d="M12 20V9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            <path d="M12 14c-4.2 0-6.2-2.1-6.2-5.2 3.8 0 6.2 1.7 6.2 5.2Zm0-3.1c0-3.7 2.1-5.8 6.2-5.8 0 3.5-2.2 5.8-6.2 5.8Z" fill="currentColor" fill-opacity=".2" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+            <circle cx="12" cy="20" r="1" fill="currentColor"/>
+          </svg>
+        </div>
+        <div>
+          <h1>Moss Circuit</h1>
+          <p class="eyebrow">A tiny garden arcade · No. 01</p>
+        </div>
+      </div>
+      <div class="top-actions">
+        <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Switch to light mode">
+          <svg class="sun-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="4"/>
+            <path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"/>
+          </svg>
+          <svg class="moon-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M20.2 15.4A8.6 8.6 0 0 1 8.6 3.8 8.7 8.7 0 1 0 20.2 15.4Z"/>
+          </svg>
+          <span>Light mode</span>
+        </button>
+        <div class="live-tag"><span class="live-dot" aria-hidden="true"></span> Plot 01 · Growing</div>
+      </div>
+    </header>
+
+    <section class="scoreboard" aria-label="Game scores">
+      <div class="stat"><span class="stat-label">Seeds gathered</span><span class="stat-value" id="score">00</span></div>
+      <div class="stat"><span class="stat-label">Personal best</span><span class="stat-value" id="best">00</span></div>
+    </section>
+
+    <section class="board-frame" aria-label="Snake game">
+      <canvas id="game" aria-label="Moss Circuit garden board. Use arrow keys or WASD to move."></canvas>
+      <div class="overlay" id="overlay">
+        <div class="overlay-content">
+          <div class="overlay-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.8c0-.8.9-1.3 1.6-.9l9 5.2a1 1 0 0 1 0 1.8l-9 5.2a1.05 1.05 0 0 1-1.6-.9V5.8Z"/></svg>
+          </div>
+          <h2 id="overlay-title">The garden is yours</h2>
+          <p id="overlay-copy">Gather moon-seeds. Follow the winding path, not the edge.</p>
+          <button class="primary-button" id="start-button" type="button">Tend the garden</button>
+        </div>
+      </div>
+    </section>
+
+    <div class="footline">
+      <span class="key-hint"><kbd>↑</kbd><kbd>←</kbd><kbd>↓</kbd><kbd>→</kbd><span>steer · WASD</span></span>
+      <span><kbd>Space</kbd> to pause</span>
+    </div>
+    <nav class="mobile-controls" aria-label="Touch direction controls">
+      <button type="button" data-dir="up" aria-label="Move up">↑</button>
+      <button type="button" data-dir="left" aria-label="Move left">←</button>
+      <button type="button" data-dir="down" aria-label="Move down">↓</button>
+      <button type="button" data-dir="right" aria-label="Move right">→</button>
+    </nav>
+  </main>
+
+  <script>
+    (() => {
+      const canvas = document.querySelector("#game");
+      const ctx = canvas.getContext("2d");
+      const scoreEl = document.querySelector("#score");
+      const bestEl = document.querySelector("#best");
+      const overlay = document.querySelector("#overlay");
+      const titleEl = document.querySelector("#overlay-title");
+      const copyEl = document.querySelector("#overlay-copy");
+      const startButton = document.querySelector("#start-button");
+      const themeButton = document.querySelector("#theme-toggle");
+      const themeMeta = document.querySelector('meta[name="theme-color"]');
+      const board = 24;
+      const initialSpeed = 145;
+      let snake, food, direction, nextDirection, score, best, state, lastStep;
+      let pixelSize = 0;
+
+      try {
+        best = Number(localStorage.getItem("moss-circuit-best")) || 0;
+      } catch {
+        best = 0;
+      }
+      bestEl.textContent = String(best).padStart(2, "0");
+
+      function applyTheme(theme) {
+        document.documentElement.dataset.theme = theme;
+        const nextTheme = theme === "dark" ? "light" : "dark";
+        themeButton.setAttribute("aria-label", `Switch to ${nextTheme} mode`);
+        themeButton.querySelector("span").textContent = `${nextTheme[0].toUpperCase()}${nextTheme.slice(1)} mode`;
+        themeMeta.content = theme === "dark" ? "#111711" : "#f1efe5";
+        draw();
+      }
+
+      themeButton.addEventListener("click", () => {
+        const nextTheme = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+        applyTheme(nextTheme);
+        try {
+          localStorage.setItem("moss-circuit-theme", nextTheme);
+        } catch {
+          // The selected theme still applies for this page.
+        }
+      });
+
+      function resize() {
+        const rect = canvas.getBoundingClientRect();
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        pixelSize = rect.width / board;
+        canvas.width = Math.round(rect.width * dpr);
+        canvas.height = Math.round(rect.height * dpr);
+        ctx.setTransform(canvas.width / board, 0, 0, canvas.height / board, 0, 0);
+        draw();
+      }
+
+      function reset() {
+        snake = [{ x: 11, y: 12 }, { x: 10, y: 12 }, { x: 9, y: 12 }];
+        direction = { x: 1, y: 0 };
+        nextDirection = direction;
+        score = 0;
+        lastStep = 0;
+        placeFood();
+        scoreEl.textContent = "00";
+        state = "ready";
+        draw();
+      }
+
+      function placeFood() {
+        do {
+          food = { x: Math.floor(Math.random() * board), y: Math.floor(Math.random() * board) };
+        } while (snake.some(segment => segment.x === food.x && segment.y === food.y));
+      }
+
+      function showOverlay(title, copy, buttonText) {
+        titleEl.textContent = title;
+        copyEl.textContent = copy;
+        startButton.textContent = buttonText;
+        overlay.hidden = false;
+      }
+
+      function startGame() {
+        if (state === "over") reset();
+        state = "playing";
+        overlay.hidden = true;
+        lastStep = performance.now();
+        requestAnimationFrame(loop);
+      }
+
+      function endGame() {
+        state = "over";
+        if (score > best) {
+          best = score;
+          bestEl.textContent = String(best).padStart(2, "0");
+          try {
+            localStorage.setItem("moss-circuit-best", String(best));
+          } catch {
+            // The score remains available for this page even when storage is blocked.
+          }
+        }
+        showOverlay("The path loops back", `You gathered ${score} ${score === 1 ? "seed" : "seeds"}. Shall we grow another?`, "Grow again");
+      }
+
+      function draw() {
+        if (!ctx || !pixelSize) return;
+        ctx.clearRect(0, 0, board, board);
+        const styles = getComputedStyle(document.documentElement);
+        ctx.fillStyle = styles.getPropertyValue("--canvas-fill").trim();
+        ctx.fillRect(0, 0, board, board);
+
+        ctx.strokeStyle = styles.getPropertyValue("--grid-line").trim();
+        ctx.lineWidth = .025;
+        for (let i = 1; i < board; i++) {
+          ctx.beginPath();
+          ctx.moveTo(i, 0);
+          ctx.lineTo(i, board);
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.moveTo(0, i);
+          ctx.lineTo(board, i);
+          ctx.stroke();
+        }
+
+        if (food) {
+          const pulse = .9 + Math.sin(performance.now() / 260) * .045;
+          ctx.save();
+          ctx.shadowColor = styles.getPropertyValue("--food").trim();
+          ctx.shadowBlur = 9;
+          ctx.fillStyle = styles.getPropertyValue("--food").trim();
+          for (let petal = 0; petal < 5; petal++) {
+            const angle = (petal * Math.PI * 2) / 5;
+            const x = food.x + .5 + Math.cos(angle) * .13;
+            const y = food.y + .5 + Math.sin(angle) * .13;
+            ctx.beginPath();
+            ctx.ellipse(x, y, .105 * pulse, .17 * pulse, angle, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          ctx.shadowBlur = 0;
+          ctx.fillStyle = styles.getPropertyValue("--food-highlight").trim();
+          ctx.beginPath();
+          ctx.arc(food.x + .5, food.y + .5, .105, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = styles.getPropertyValue("--leaf-color").trim();
+          ctx.beginPath();
+          ctx.ellipse(food.x + .69, food.y + .23, .11, .055, -.6, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        }
+
+        if (snake) {
+          ctx.save();
+          ctx.beginPath();
+          snake.forEach((segment, index) => {
+            const x = segment.x + .5;
+            const y = segment.y + .5;
+            if (index === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+          });
+          ctx.lineCap = "round";
+          ctx.lineJoin = "round";
+          ctx.lineWidth = .63;
+          ctx.strokeStyle = `rgba(${styles.getPropertyValue("--snake-body").trim()}, .76)`;
+          ctx.stroke();
+          ctx.restore();
+
+          snake.forEach((segment, index) => {
+            ctx.save();
+            if (index === 0) {
+              ctx.shadowColor = styles.getPropertyValue("--green").trim();
+              ctx.shadowBlur = 8;
+              ctx.fillStyle = styles.getPropertyValue("--snake-head").trim();
+            } else {
+              const fade = Math.max(.48, 1 - index * .025);
+              ctx.fillStyle = `rgba(${styles.getPropertyValue("--snake-body").trim()}, ${fade})`;
+            }
+            ctx.beginPath();
+            ctx.arc(segment.x + .5, segment.y + .5, index === 0 ? .39 : .34, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+          });
+          drawEyes();
+        }
+      }
+
+      function drawEyes() {
+        const head = snake[0];
+        const perpendicular = { x: -direction.y, y: direction.x };
+        ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue("--snake-eye").trim();
+        for (const side of [-1, 1]) {
+          const x = head.x + .5 + direction.x * .19 + perpendicular.x * .17 * side;
+          const y = head.y + .5 + direction.y * .19 + perpendicular.y * .17 * side;
+          ctx.beginPath();
+          ctx.arc(x, y, .055, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+
+      function step() {
+        direction = nextDirection;
+        const head = { x: snake[0].x + direction.x, y: snake[0].y + direction.y };
+        const eating = head.x === food.x && head.y === food.y;
+        const body = eating ? snake : snake.slice(0, -1);
+        if (head.x < 0 || head.y < 0 || head.x >= board || head.y >= board ||
+            body.some(segment => segment.x === head.x && segment.y === head.y)) {
+          endGame();
+          return;
+        }
+        snake.unshift(head);
+        if (eating) {
+          score += 1;
+          scoreEl.textContent = String(score).padStart(2, "0");
+          placeFood();
+        } else {
+          snake.pop();
+        }
+        draw();
+      }
+
+      function loop(now) {
+        if (state !== "playing") return;
+        const speed = Math.max(66, initialSpeed - score * 3);
+        if (now - lastStep >= speed) {
+          lastStep = now;
+          step();
+        }
+        if (state === "playing") requestAnimationFrame(loop);
+      }
+
+      function setDirection(name) {
+        if (state === "ready") startGame();
+        if (state !== "playing") return;
+        const directions = {
+          up: { x: 0, y: -1 },
+          down: { x: 0, y: 1 },
+          left: { x: -1, y: 0 },
+          right: { x: 1, y: 0 }
+        };
+        const chosen = directions[name];
+        if (chosen && (chosen.x !== -nextDirection.x || chosen.y !== -nextDirection.y)) {
+          nextDirection = chosen;
+        }
+      }
+
+      function togglePause() {
+        if (state === "playing") {
+          state = "paused";
+          showOverlay("Garden at rest", "Take a breath. Your little winding path will wait.", "Resume");
+        } else if (state === "paused") {
+          startGame();
+        }
+      }
+
+      startButton.addEventListener("click", startGame);
+      window.addEventListener("keydown", event => {
+        const keys = {
+          ArrowUp: "up", w: "up", W: "up",
+          ArrowDown: "down", s: "down", S: "down",
+          ArrowLeft: "left", a: "left", A: "left",
+          ArrowRight: "right", d: "right", D: "right"
+        };
+        if (keys[event.key]) {
+          event.preventDefault();
+          setDirection(keys[event.key]);
+        } else if (event.code === "Space") {
+          event.preventDefault();
+          if (state === "ready") startGame();
+          else togglePause();
+        } else if (event.key === "Enter" && state === "over") {
+          startGame();
+        }
+      });
+      document.querySelectorAll("[data-dir]").forEach(button => {
+        button.addEventListener("click", () => setDirection(button.dataset.dir));
+      });
+      window.addEventListener("resize", resize);
+
+      reset();
+      resize();
+      showOverlay("The garden is yours", "Gather moon-seeds. Follow the winding path, not the edge.", "Tend the garden");
+    })();
+  </script>
+</body>
+</html>
